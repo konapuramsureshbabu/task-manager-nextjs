@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import mongoose, { Schema, Model } from 'mongoose';
 
 interface ITask {

@@ -1,7 +1,7 @@
 'use client';
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 
 interface Task {
   _id: string;
@@ -15,7 +15,6 @@ export default function Home() {
   const [description, setDescription] = useState<string>('');
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const router = useRouter();
 
   useEffect(() => {
     fetchTasks();

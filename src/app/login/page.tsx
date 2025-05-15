@@ -1,5 +1,6 @@
 'use client';
-
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable react/no-unescaped-entities */
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';

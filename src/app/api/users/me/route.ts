@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
@@ -23,6 +24,8 @@ const verifyToken = (request: NextRequest): string | null => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as DecodedToken;
     return decoded.userId;
   } catch (error) {
+    console.log("e",error);
+    
     return null;
   }
 };

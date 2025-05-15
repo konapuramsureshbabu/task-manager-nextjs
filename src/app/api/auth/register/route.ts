@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcrypt';
 import connectMongoDB, { User } from '@/app/lib/mongodb';

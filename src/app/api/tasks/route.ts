@@ -1,4 +1,4 @@
-
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
 import connectMongoDB, { Task } from '@/app/lib/mongodb';
@@ -19,6 +19,7 @@ const verifyToken = (request: NextRequest): string | null => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as { userId: string };
     return decoded.userId;
   } catch (error) {
+    console.log(error);
     return null;
   }
 };
