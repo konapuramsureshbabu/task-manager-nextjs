@@ -10,7 +10,8 @@ interface ITask {
 interface IUser {
   name: string;
   email: string;
-  password: string;
+  password?: string ; // Optional for Google users
+  isGoogleUser?: boolean; // Flag for Google auth
   _id?: string;
 }
 
@@ -22,10 +23,10 @@ const taskSchema: Schema = new Schema<ITask>({
 const userSchema: Schema = new Schema<IUser>({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
+  password: { type: String, required: false },
+  isGoogleUser: { type: Boolean, default: false },
 });
 
-// Prevent model redefinition by checking if models exist
 export const Task: Model<ITask> =
   mongoose.models.Task || mongoose.model<ITask>('Task', taskSchema);
 export const User: Model<IUser> =

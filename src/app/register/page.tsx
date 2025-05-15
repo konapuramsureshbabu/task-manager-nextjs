@@ -1,5 +1,6 @@
 'use client';
 /* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -28,7 +29,7 @@ export default function RegisterPage() {
         throw new Error(data.error || 'Registration failed');
       }
 
-      router.push('/login'); // Redirect to login page
+      router.push('/login');
     } catch (error: any) {
       console.error('Register error:', error);
       setError(error.message || 'Failed to register');
@@ -88,6 +89,9 @@ export default function RegisterPage() {
         <Link href="/login" className="text-blue-500 underline">
           Login
         </Link>
+      </p>
+      <p className="mt-2 text-center text-sm text-gray-600">
+        Or sign in with Google on the login page.
       </p>
     </div>
   );

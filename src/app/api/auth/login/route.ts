@@ -11,36 +11,40 @@ interface LoginRequest {
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
-    console.log('POST /api/auth/login called');
-    await connectMongoDB();
-    const { email, password }: LoginRequest = await request.json();
-
-    // Validate input
+    const { email, password } = await request.json() as LoginRequest;
     if (!email || !password) {
       return NextResponse.json({ error: 'Email and password are required' }, { status: 400 });
     }
 
-    // Find user
+    await connectMongoDB();
     const user = await User.findOne({ email });
     if (!user) {
       return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
     }
 
-    // Verify password
+    if (user.isGoogleUser) {
+      return NextResponse.json({ error: 'Use Google Sign-In for this account' }, { status: 403 });
+    }
+
+    if (!user.password) {
+      return NextResponse.json({ error: 'No password set for this account' }, { status: 401 });
+    }
+
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
     }
 
-    // Generate JWT
-    const token = jwt.sign({ userId: user._id, email: user.email }, process.env.JWT_SECRET as string, {
-      expiresIn: '1h',
-    });
+    const token = jwt.sign(
+      { userId: user._id.toString(), email: user.email },
+      process.env.JWT_SECRET as string,
+      { expiresIn: '1h' }
+    );
 
-    console.log('User logged in:', { email });
     return NextResponse.json({ token }, { status: 200 });
-  } catch (error: any) {
-    console.error('POST /api/auth/login error:', error.message, error.stack);
-    return NextResponse.json({ error: 'Internal Server Error', details: error.message }, { status: 500 });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    console.error('POST /api/auth/login error:', message);
+    return NextResponse.json({ error: 'Internal Server Error', details: message }, { status: 500 });
   }
 }
