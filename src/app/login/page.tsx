@@ -1,123 +1,219 @@
-'use client';
+"use client";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react/no-unescaped-entities */
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
+import Swal from "sweetalert2";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState<string>('');
-  const [password, setPassword] = useState<string>('');
+  const [email, setEmail] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [showPassword, setShowPassword] = useState<boolean>(false);
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
     setError(null);
+    setIsLoading(true);
 
     try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || 'Login failed');
+        throw new Error(data.error || "Login failed");
       }
 
-      localStorage.setItem('token', data.token);
-      router.push('/');
+      localStorage.setItem("token", data.token);
+
+      // Show SweetAlert2 toast message with green theme
+      await Swal.fire({
+        toast: true,
+        position: "top-end",
+        icon: "success",
+        text: "Welcome, User! Login successful!",
+        timer: 2000,
+        timerProgressBar: true,
+        showConfirmButton: false,
+        padding: "0.75rem",
+        width: "auto",
+        background: "#10b981",
+        color: "#ffffff",
+      });
+
+      router.push("/");
     } catch (error: any) {
-      console.error('Login error:', error);
-      setError(error.message || 'Failed to login');
+      console.error("Login error:", error);
+      setError(error.message || "Failed to login");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleGoogleSuccess = async (credentialResponse: any) => {
+    setIsLoading(true);
     try {
-      const res = await fetch('/api/auth/google', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch("/api/auth/google", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token: credentialResponse.credential }),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || 'Google login failed');
+        throw new Error(data.error || "Google login failed");
       }
 
-      localStorage.setItem('token', data.token);
-      router.push('/');
+      localStorage.setItem("token", data.token);
+
+      await Swal.fire({
+        toast: true,
+        position: "top-end",
+        icon: "success",
+        text: "Welcome, User! Login successful!",
+        timer: 2000,
+        timerProgressBar: true,
+        showConfirmButton: false,
+        padding: "0.75rem",
+        width: "auto",
+        background: "#10b981",
+        color: "#ffffff",
+      });
+      router.push("/");
     } catch (error: any) {
-      console.error('Google login error:', error);
-      setError(error.message || 'Failed to login with Google');
+      console.error("Google login error:", error);
+      setError(error.message || "Failed to login with Google");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleGoogleError = () => {
-    setError('Google login failed');
+    setError("Google login failed");
+    setIsLoading(false);
   };
 
+  // Skeleton Loader Component
+  const SkeletonLoader = () => (
+    <div className="space-y-6 animate-pulse">
+      <div className="h-6 bg-gray-200 rounded w-3/4 mx-auto"></div>
+      <div className="space-y-4">
+        <div className="h-10 bg-gray-200 rounded"></div>
+        <div className="h-10 bg-gray-200 rounded"></div>
+        <div className="h-12 bg-gray-200 rounded"></div>
+        <div className="h-12 bg-gray-200 rounded"></div>
+      </div>
+    </div>
+  );
+
   return (
-    <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ''}>
-      <div className="container mx-auto p-4 max-w-md">
-        <h1 className="text-2xl font-bold mb-4">Login</h1>
-        {error && <p className="text-red-500 mb-4">{error}</p>}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium">
-              Email
-            </label>
-            <input
-              type="email"
-              id="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="border p-2 w-full rounded"
-              required
-            />
-          </div>
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium">
-              Password
-            </label>
-            <input
-              type="password"
-              id="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="border p-2 w-full rounded"
-              required
-            />
-          </div>
-          <button type="submit" className="bg-blue-500 text-white p-2 rounded w-full">
-            Login
-          </button>
-        </form>
-        <div className="mt-4 text-center">
-          <p>Or sign in with:</p>
-          <div className="mt-2">
-            <GoogleLogin
-              onSuccess={handleGoogleSuccess}
-              onError={handleGoogleError}
-              text="signin_with"
-              theme="filled_blue"
-              size="large"
-              width="352"
-            />
-          </div>
+    <GoogleOAuthProvider
+      clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ""}
+    >
+      <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
+        <div className="w-full max-w-md bg-white rounded-lg shadow-lg p-6 transition-all duration-300 hover:shadow-xl">
+          {isLoading ? (
+            <SkeletonLoader />
+          ) : (
+            <>
+              <h1 className="text-2xl font-bold text-center text-gray-800 mb-6">
+                Sign In
+              </h1>
+              {error && (
+                <p className="text-red-500 text-sm text-center mb-4 bg-red-50 p-2 rounded">
+                  {error}
+                </p>
+              )}
+              <form onSubmit={handleSubmit} className="space-y-5">
+                <div>
+                  <label
+                    htmlFor="email"
+                    className="block text-sm font-medium text-gray-700"
+                  >
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    id="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="mt-1 border border-gray-300 p-2 w-full rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
+                    required
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="password"
+                    className="block text-sm font-medium text-gray-700"
+                  >
+                    Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      id="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="mt-1 border border-gray-300 p-2 pr-10 w-full rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors duration-200"
+                    >
+                      {showPassword ? (
+                        <FaEyeSlash size={20} />
+                      ) : (
+                        <FaEye size={20} />
+                      )}
+                    </button>
+                  </div>
+                </div>
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700 disabled:bg-blue-300 disabled:cursor-not-allowed transition-all duration-200"
+                >
+                  {isLoading ? "Logging in..." : "Sign In"}
+                </button>
+              </form>
+              <div className="mt-6 text-center">
+                <p className="text-sm text-gray-600">Or sign in with:</p>
+                <div className="mt-3">
+                  <GoogleLogin
+                    onSuccess={handleGoogleSuccess}
+                    onError={handleGoogleError}
+                    text="signin_with"
+                    theme="filled_blue"
+                    size="large"
+                    width="100%"
+                  />
+                </div>
+              </div>
+              <p className="mt-5 text-center text-sm text-gray-600">
+                Don't have an account?{" "}
+                <Link
+                  href="/register"
+                  className="text-blue-600 hover:underline font-medium"
+                >
+                  Register
+                </Link>
+              </p>
+            </>
+          )}
         </div>
-        <p className="mt-4 text-center">
-          Don't have an account?{' '}
-          <Link href="/register" className="text-blue-500 underline">
-            Register
-          </Link>
-        </p>
       </div>
     </GoogleOAuthProvider>
   );
