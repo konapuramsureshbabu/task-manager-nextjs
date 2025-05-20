@@ -13,7 +13,8 @@ export default function NotificationListener() {
     if (token) {
       try {
         const decoded = JSON.parse(atob(token.split('.')[1]));
-        userId = decoded.id || decoded.sub || null; // Adjust based on your token structure
+        userId = decoded.email || decoded.sub || null; // Adjust based on your token structure
+        
       } catch (error) {
         console.error('Error decoding token:', error);
       }
