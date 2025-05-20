@@ -32,7 +32,6 @@ const verifyToken = (request: NextRequest): string | null => {
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
-    console.log('GET /api/users/me called');
     const userId = verifyToken(request);
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -42,7 +41,6 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
-    console.log('User fetched:', { name: user.name, email: user.email });
     return NextResponse.json({ name: user.name, email: user.email }, { status: 200 });
   } catch (error: any) {
     console.error('GET /api/users/me error:', error.message, error.stack);
@@ -52,7 +50,6 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
 export async function PUT(request: NextRequest): Promise<NextResponse> {
   try {
-    console.log('PUT /api/users/me called');
     const userId = verifyToken(request);
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -73,7 +70,6 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    console.log('User updated:', { name: user.name, email: user.email });
     return NextResponse.json({ name: user.name, email: user.email }, { status: 200 });
   } catch (error: any) {
     console.error('PUT /api/users/me error:', error.message, error.stack);

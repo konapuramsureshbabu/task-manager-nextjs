@@ -1,9 +1,9 @@
 import { configureStore } from '@reduxjs/toolkit';
-import notificationReducer from './slices/notificationSlice';
+import sseMessagesReducer from './slices/sseMessagesSlice'
 
 export const store = configureStore({
   reducer: {
-    notifications: notificationReducer,
+    sseMessages: sseMessagesReducer, 
   },
 });
 

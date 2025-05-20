@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import mongoose, { Schema, Model } from 'mongoose';
+import mongoose, { Schema, Model, Document } from 'mongoose';
 
 interface ITask {
   title: string;
@@ -10,9 +10,22 @@ interface ITask {
 interface IUser {
   name: string;
   email: string;
-  password?: string ; // Optional for Google users
-  isGoogleUser?: boolean; // Flag for Google auth
+  password?: string;
+  isGoogleUser?: boolean;
   _id?: string;
+}
+
+interface ISubscription extends Document {
+  token: string;
+  userId?: string;
+  createdAt: Date;
+  updatedAt?: Date;
+}
+
+interface INotification extends Document {
+  message: string;
+  userId?: string;
+  createdAt: Date;
 }
 
 const taskSchema: Schema = new Schema<ITask>({
@@ -20,23 +33,24 @@ const taskSchema: Schema = new Schema<ITask>({
   description: { type: String, required: true },
 });
 
-interface ISubscription {
-  token: string;
-  userId?: string;
-  createdAt: Date;
-  updatedAt?: Date;
-}
-
 const userSchema: Schema = new Schema<IUser>({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: false },
   isGoogleUser: { type: Boolean, default: false },
 });
+
 const subscriptionSchema: Schema = new Schema<ISubscription>({
   token: { type: String, required: true, unique: true },
   userId: { type: String },
+  createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
+});
+
+const NotificationSchema: Schema<INotification> = new Schema({
+  message: { type: String, required: true },
+  userId: { type: String },
+  createdAt: { type: Date, default: Date.now },
 });
 
 export const Subscription: Model<ISubscription> =
@@ -44,8 +58,12 @@ export const Subscription: Model<ISubscription> =
 
 export const Task: Model<ITask> =
   mongoose.models.Task || mongoose.model<ITask>('Task', taskSchema);
+
 export const User: Model<IUser> =
   mongoose.models.User || mongoose.model<IUser>('User', userSchema);
+
+export const Notification: Model<INotification> =
+  mongoose.models.Notification || mongoose.model<INotification>('Notification', NotificationSchema);
 
 const connectMongoDB = async (): Promise<void> => {
   if (mongoose.connection.readyState >= 1) {
