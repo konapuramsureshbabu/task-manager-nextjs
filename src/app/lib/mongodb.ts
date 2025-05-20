@@ -20,12 +20,27 @@ const taskSchema: Schema = new Schema<ITask>({
   description: { type: String, required: true },
 });
 
+interface ISubscription {
+  token: string;
+  userId?: string;
+  createdAt: Date;
+  updatedAt?: Date;
+}
+
 const userSchema: Schema = new Schema<IUser>({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: false },
   isGoogleUser: { type: Boolean, default: false },
 });
+const subscriptionSchema: Schema = new Schema<ISubscription>({
+  token: { type: String, required: true, unique: true },
+  userId: { type: String },
+  updatedAt: { type: Date, default: Date.now },
+});
+
+export const Subscription: Model<ISubscription> =
+  mongoose.models.Subscription || mongoose.model<ISubscription>('Subscription', subscriptionSchema);
 
 export const Task: Model<ITask> =
   mongoose.models.Task || mongoose.model<ITask>('Task', taskSchema);
