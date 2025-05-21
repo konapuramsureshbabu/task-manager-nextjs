@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useAppDispatch } from '../redux/redux-hooks';
 
 export default function NotificationListener() {

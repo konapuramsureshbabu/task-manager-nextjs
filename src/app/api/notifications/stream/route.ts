@@ -4,14 +4,6 @@
 import { NextResponse } from 'next/server';
 import connectMongoDB, { Notification } from '@/app/lib/mongodb';
 
-// Helper function to parse message into title and body
-function parseNotificationMessage(message: string): { title: string; body: string } {
-  const [title, ...bodyParts] = message.split(': ');
-  return {
-    title: title || 'No Title',
-    body: bodyParts.join(': ') || 'No Body',
-  };
-}
 
 export async function GET(request: Request) {
   try {
