@@ -1,13 +1,12 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useAppDispatch } from '../redux/redux-hooks';
 
 export default function NotificationListener() {
   const dispatch = useAppDispatch();
 
   useEffect(() => {
-    // Get userId from token
     let userId: string | null = null;
     const token = localStorage.getItem('token');
     if (token) {
@@ -29,13 +28,14 @@ export default function NotificationListener() {
 
     eventSource.addEventListener('notification', (event) => {
       const notification = JSON.parse(event.data);
-
+      
       // Dispatch to Redux
       dispatch({
         type: 'sseMessages/addSSEMessage',
         payload: {
           id: notification.id,
-          body: notification.message,
+          title:notification.title,
+          body: notification.body,
           timestamp: notification.createdAt || new Date().toISOString(),
         },
       });
@@ -52,8 +52,18 @@ export default function NotificationListener() {
       setTimeout(() => {
       }, 5000);
     };
+    // Subscribe user if not already subscribed
+    if (userId && token) {
+      fetch('/api/subscriptions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ userId }),
+      }).catch((error) => console.error('Error subscribing:', error));
+    }
+
 
     return () => {
+      
       eventSource.close();
     };
   }, [dispatch]);

@@ -1,6 +1,17 @@
+//api/notification/stream
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextResponse } from 'next/server';
 import connectMongoDB, { Notification } from '@/app/lib/mongodb';
+
+// Helper function to parse message into title and body
+function parseNotificationMessage(message: string): { title: string; body: string } {
+  const [title, ...bodyParts] = message.split(': ');
+  return {
+    title: title || 'No Title',
+    body: bodyParts.join(': ') || 'No Body',
+  };
+}
 
 export async function GET(request: Request) {
   try {
@@ -29,11 +40,16 @@ export async function GET(request: Request) {
 
         // Send existing notifications as initial batch
         existingNotifications.forEach((notification) => {
+        
+          const { title, body } = notification
+          
           const message = {
             id: notification._id.toString(),
-            message: notification.message,
+            title,
+            body,
             createdAt: notification.createdAt,
           };
+          
           controller.enqueue(`event: notification\ndata: ${JSON.stringify(message)}\n\n`);
         });
 
@@ -46,20 +62,21 @@ export async function GET(request: Request) {
           controller.enqueue(`event: ping\ndata: ${JSON.stringify({ time: new Date().toISOString() })}\n\n`);
         };
         const pingInterval = setInterval(sendPing, 15000);
-
-        // Handle new notifications
+// Handle new notifications
         changeStream.on('change', (change) => {
           if (change.operationType === 'insert') {
             const notification = change.fullDocument;
+            
             const message = {
               id: notification._id.toString(),
-              message: notification.message,
+              title: notification.title,
+              body:notification.body,
               createdAt: notification.createdAt,
             };
             controller.enqueue(`event: notification\ndata: ${JSON.stringify(message)}\n\n`);
           }
         });
-
+        
         // Handle stream errors
         changeStream.on('error', (error) => {
           console.error('Change Stream error:', error);

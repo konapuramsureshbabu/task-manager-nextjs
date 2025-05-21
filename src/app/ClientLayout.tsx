@@ -13,6 +13,7 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [isMessagesOpen, setIsMessagesOpen] = useState<boolean>(false);
+  const [role,setRole]=useState<string | null>(null);
   const pathname = usePathname();
   const router = useRouter();
   const dispatch = useAppDispatch();
@@ -42,6 +43,7 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
       const decoded = JSON.parse(atob(token.split('.')[1]));
       if (decoded && decoded.email) {
         setUserEmail(decoded.email);
+        setRole(decoded.role)
       } else {
         throw new Error('Invalid token');
       }
@@ -75,7 +77,7 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
       let userId: string | null = null;
       if (token) {
         const decoded = JSON.parse(atob(token.split('.')[1]));
-        userId = decoded.id || decoded.sub || null; // Adjust based on your token structure
+        userId = decoded.email  || null; // Adjust based on your token structure
       }
 
       // Call API to clear notifications
@@ -115,6 +117,13 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
     hidden: { opacity: 0, y: -10 },
     visible: { opacity: 1, y: 0, transition: { duration: 0.2 } },
   };
+  const navItems = [
+    { href: '/', label: 'Tasks', icon: <FaTasks className="w-5 h-5" /> },
+    { href: '/profile', label: 'Profile', icon: <FaUser className="w-5 h-5" /> },
+    ...(role === 'admin'
+      ? [{ href: '/notifications', label: 'Send Notification', icon: <FaBell className="w-5 h-5" /> }]
+      : []),
+  ];
 
   return (
     <>
@@ -191,10 +200,10 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
                                 animate="visible"
                                 className="p-4 border-b border-gray-100 hover:bg-gray-50"
                               >
-                                <p className="text-sm font-medium text-gray-800">Message</p>
+                                <p className="text-sm font-medium text-gray-800">{message.title}</p>
                                 <p className="text-sm text-gray-600">{message.body}</p>
                                 <p className="text-xs text-gray-400 mt-1">
-                                  {new Date(message.timestamp).toLocaleString()}
+                                  {message.timestamp}
                                 </p>
                               </motion.div>
                             ))
@@ -247,11 +256,7 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
                   </button>
                 </div>
                 <nav className="flex-1 p-4 space-y-2">
-                  {[
-                    { href: '/', label: 'Tasks', icon: <FaTasks className="w-5 h-5" /> },
-                    { href: '/profile', label: 'Profile', icon: <FaUser className="w-5 h-5" /> },
-                    { href: '/notifications', label: 'Send Notification', icon: <FaBell className="w-5 h-5" /> },
-                  ].map((item, index) => (
+                {navItems.map((item, index) => (
                     <motion.div
                       key={item.href}
                       custom={index}

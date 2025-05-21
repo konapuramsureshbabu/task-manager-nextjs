@@ -10,21 +10,23 @@ interface ITask {
 interface IUser {
   name: string;
   email: string;
+  role?: string;
   password?: string;
   isGoogleUser?: boolean;
   _id?: string;
-}
-
-interface ISubscription extends Document {
-  token: string;
-  userId?: string;
   createdAt: Date;
-  updatedAt?: Date;
 }
 
-interface INotification extends Document {
-  message: string;
-  userId?: string;
+interface ISubscription {
+  userId: string;
+  createdAt: Date;
+  _id?: string;
+}
+
+interface INotification {
+  title: string;
+  body: string;
+  userId: string;
   createdAt: Date;
 }
 
@@ -36,20 +38,21 @@ const taskSchema: Schema = new Schema<ITask>({
 const userSchema: Schema = new Schema<IUser>({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
-  password: { type: String, required: false },
+  password: { type: String },
   isGoogleUser: { type: Boolean, default: false },
+  role: { type: String, enum: ['user', 'admin'], default: 'user' },
+  createdAt: { type: Date, default: Date.now },
 });
 
 const subscriptionSchema: Schema = new Schema<ISubscription>({
-  token: { type: String, required: true, unique: true },
-  userId: { type: String },
+  userId: { type: String, required: true, unique: true },
   createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now },
 });
 
-const NotificationSchema: Schema<INotification> = new Schema({
-  message: { type: String, required: true },
-  userId: { type: String },
+const notificationSchema: Schema<INotification> = new Schema({
+  userId: { type: String, required: true },
+  title: { type: String, required: true },
+  body: { type: String, required: true },
   createdAt: { type: Date, default: Date.now },
 });
 
@@ -63,18 +66,25 @@ export const User: Model<IUser> =
   mongoose.models.User || mongoose.model<IUser>('User', userSchema);
 
 export const Notification: Model<INotification> =
-  mongoose.models.Notification || mongoose.model<INotification>('Notification', NotificationSchema);
+  mongoose.models.Notification || mongoose.model<INotification>('Notification', notificationSchema);
 
 const connectMongoDB = async (): Promise<void> => {
   if (mongoose.connection.readyState >= 1) {
-    console.log('MongoDB already connected');
     return;
   }
 
   try {
-    console.log('Connecting to MongoDB with URI:', process.env.MONGODB_URI?.replace(/:.*@/, ':<hidden>@'));
     await mongoose.connect(process.env.MONGODB_URI as string);
-    console.log('Connected to MongoDB Atlas');
+
+    // Clean up endpoint_1 index and field
+    await Subscription.collection.dropIndex('endpoint_1').catch((err) => {
+      if (err.codeName === 'IndexNotFound') {
+      } else {
+        console.error('Error dropping endpoint_1 index:', err);
+      }
+    });
+    await Subscription.updateMany({}, { $unset: { endpoint: '' } });
+    await Subscription.syncIndexes();
   } catch (error: any) {
     console.error('MongoDB connection error:', error.message, error.stack);
     throw new Error('Failed to connect to MongoDB');
