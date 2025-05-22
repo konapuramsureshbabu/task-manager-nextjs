@@ -1,5 +1,7 @@
-'use client';
 /* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable react/no-unescaped-entities */
+
+'use client';
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -60,7 +62,8 @@ export default function Home() {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState('');
   const [isChatLoading, setIsChatLoading] = useState(false);
-
+  const [isPredictionModalOpen, setIsPredictionModalOpen] = useState(false);
+  const [isClusteringModalOpen, setIsClusteringModalOpen] = useState(false);
   useEffect(() => {
     fetchTasks();
     // Initialize with a welcome message
@@ -569,47 +572,179 @@ export default function Home() {
 
           {/* Models Tab */}
           {activeTab === 'models' && (
-            <div className="space-y-8">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-white p-6 rounded-lg shadow-lg"
-              >
-                <h3 className="text-xl font-semibold mb-4">Task Completion Predictor</h3>
-                <div className="p-4 bg-gray-50 rounded-lg mb-4">
-                  <p className="text-gray-700 mb-4">
-                    This model predicts the likelihood of task completion based on historical patterns.
-                  </p>
-                  <div className="h-64 flex items-center justify-center bg-white rounded border border-gray-200">
-                    <p className="text-gray-500">Model visualization would appear here</p>
-                  </div>
-                </div>
-                <button className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg transition-all duration-200">
-                  Run Prediction Model
+    <div className="space-y-8">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-white p-6 rounded-lg shadow-lg"
+      >
+        <h3 className="text-xl font-semibold mb-4">Task Completion Predictor</h3>
+        <div className="p-4 bg-gray-50 rounded-lg mb-4">
+          <p className="text-gray-700 mb-4">
+            This model predicts the likelihood of task completion based on historical patterns.
+          </p>
+          <div className="h-64 flex items-center justify-center bg-white rounded border border-gray-200">
+            <p className="text-gray-500">Model visualization would appear here</p>
+          </div>
+        </div>
+        <button
+          data-modal-target="prediction-modal"
+          data-modal-toggle="prediction-modal"
+          onClick={() => setIsPredictionModalOpen(true)}
+          className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg transition-all duration-200"
+          type="button"
+        >
+          Run Prediction Model
+        </button>
+        {/* Prediction Modal */}
+        <div
+          id="prediction-modal"
+          tabIndex={-1}
+          aria-hidden={!isPredictionModalOpen}
+          className={`${
+            isPredictionModalOpen ? '' : 'hidden'
+          } fixed inset-0 z-50 overflow-y-auto overflow-x-hidden flex justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full bg-black bg-opacity-50`}
+        >
+          <div className="relative p-4 w-full max-w-2xl max-h-full">
+            <div className="relative bg-white rounded-lg shadow">
+              <div className="flex items-center justify-between p-4 md:p-5 border-b rounded-t">
+                <h3 className="text-xl font-semibold text-gray-900">
+                  Task Completion Prediction
+                </h3>
+                <button
+                  type="button"
+                  className="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center"
+                  data-modal-hide="prediction-modal"
+                  onClick={() => setIsPredictionModalOpen(false)}
+                >
+                  <svg
+                    className="w-3 h-3"
+                    aria-hidden="true"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 14 14"
+                  >
+                    <path
+                      stroke="currentColor"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"
+                    />
+                  </svg>
+                  <span className="sr-only">Close modal</span>
                 </button>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-                className="bg-white p-6 rounded-lg shadow-lg"
-              >
-                <h3 className="text-xl font-semibold mb-4">Task Clustering</h3>
-                <div className="p-4 bg-gray-50 rounded-lg mb-4">
-                  <p className="text-gray-700 mb-4">
-                    This model clusters similar tasks together based on their titles and descriptions.
-                  </p>
-                  <div className="h-64 flex items-center justify-center bg-white rounded border border-gray-200">
-                    <p className="text-gray-500">Cluster visualization would appear here</p>
-                  </div>
-                </div>
-                <button className="bg-purple-500 hover:bg-purple-600 text-white px-6 py-2 rounded-lg transition-all duration-200">
-                  Run Clustering Model
+              </div>
+              <div className="p-4 md:p-5 space-y-4">
+                <p className="text-base leading-relaxed text-gray-500">
+                  Running the prediction model... This would display the results of the task completion prediction based on your task data.
+                </p>
+                <p className="text-base leading-relaxed text-gray-500">
+                  Example: Based on current data, theres a 75 likelihood that tasks marked as "in-progress" will be completed within 48 hours.
+                </p>
+              </div>
+              <div className="flex items-center p-4 md:p-5 border-t border-gray-200 rounded-b">
+                <button
+                  data-modal-hide="prediction-modal"
+                  type="button"
+                  className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center"
+                  onClick={() => setIsPredictionModalOpen(false)}
+                >
+                  Close
                 </button>
-              </motion.div>
+              </div>
             </div>
-          )}
+          </div>
+        </div>
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="bg-white p-6 rounded-lg shadow-lg"
+      >
+        <h3 className="text-xl font-semibold mb-4">Task Clustering</h3>
+        <div className="p-4 bg-gray-50 rounded-lg mb-4">
+          <p className="text-gray-700 mb-4">
+            This model clusters similar tasks together based on their titles and descriptions.
+          </p>
+          <div className="h-64 flex items-center justify-center bg-white rounded border border-gray-200">
+            <p className="text-gray-500">Cluster visualization would appear here</p>
+          </div>
+        </div>
+        <button
+          data-modal-target="clustering-modal"
+          data-modal-toggle="clustering-modal"
+          onClick={() => setIsClusteringModalOpen(true)}
+          className="bg-purple-500 hover:bg-purple-600 text-white px-6 py-2 rounded-lg transition-all duration-200"
+          type="button"
+        >
+          Run Clustering Model
+        </button>
+        {/* Clustering Modal */}
+        <div
+          id="clustering-modal"
+          tabIndex={-1}
+          aria-hidden={!isClusteringModalOpen}
+          className={`${
+            isClusteringModalOpen ? '' : 'hidden'
+          } fixed inset-0 z-50 overflow-y-auto overflow-x-hidden flex justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full bg-black bg-opacity-50`}
+        >
+          <div className="relative p-4 w-full max-w-2xl max-h-full">
+            <div className="relative bg-white rounded-lg shadow">
+              <div className="flex items-center justify-between p-4 md:p-5 border-b rounded-t">
+                <h3 className="text-xl font-semibold text-gray-900">
+                  Task Clustering Results
+                </h3>
+                <button
+                  type="button"
+                  className="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center"
+                  data-modal-hide="clustering-modal"
+                  onClick={() => setIsClusteringModalOpen(false)}
+                >
+                  <svg
+                    className="w-3 h-3"
+                    aria-hidden="true"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 14 14"
+                  >
+                    <path
+                      stroke="currentColor"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"
+                    />
+                  </svg>
+                  <span className="sr-only">Close modal</span>
+                </button>
+              </div>
+              <div className="p-4 md:p-5 space-y-4">
+                <p className="text-base leading-relaxed text-gray-500">
+                  Running the clustering model... This would display clusters of tasks based on their titles and descriptions.
+                </p>
+                <p className="text-base leading-relaxed text-gray-500">
+                  Example: Cluster 1 contains tasks related to data preprocessing, Cluster 2 contains tasks related to model training.
+                </p>
+              </div>
+              <div className="flex items-center p-4 md:p-5 border-t border-gray-200 rounded-b">
+                <button
+                  data-modal-hide="clustering-modal"
+                  type="button"
+                  className="text-white bg-purple-700 hover:bg-purple-800 focus:ring-4 focus:outline-none focus:ring-purple-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center"
+                  onClick={() => setIsClusteringModalOpen(false)}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  )}
 
           {/* Chat Tab */}
           {activeTab === 'chat' && (

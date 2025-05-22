@@ -1,19 +1,20 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
+import { redirect, usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaTasks, FaUser, FaSignOutAlt, FaBell, FaEnvelope } from 'react-icons/fa';
-import { useAppDispatch, useAppSelector } from './redux/redux-hooks';
-import NotificationListener from '../app/components/NotificationListener';
-import { clearSSEMessages } from './redux/slices/sseMessagesSlice';
+import { useAppDispatch, useAppSelector } from '../redux/redux-hooks';
+import NotificationListener from '../components/NotificationListener';
+import { clearSSEMessages } from '../redux/slices/sseMessagesSlice';
 
 export function ClientLayout({ children }: { children: React.ReactNode }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [isMessagesOpen, setIsMessagesOpen] = useState<boolean>(false);
-  const [role,setRole]=useState<string | null>(null);
+  const [role, setRole] = useState<string | null>(null);
+  const [isTokenLoading, setIsTokenLoading] = useState<boolean>(true); // New loading state
   const pathname = usePathname();
   const router = useRouter();
   const dispatch = useAppDispatch();
@@ -21,20 +22,25 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
 
   // Log notifications and messages changes
   useEffect(() => {
-
-  }, [ sseMessages]);
+    // No changes needed here
+  }, [sseMessages]);
 
   // Define public routes that don't need header/sidebar/footer
   const publicRoutes = ['/login', '/register'];
   const isPublicRoute = publicRoutes.includes(pathname);
 
   useEffect(() => {
-    if (isPublicRoute) return;
+    if (isPublicRoute) {
+      setIsTokenLoading(false); // No token check for public routes
+      return;
+    }
 
     // Check for token
+    setIsTokenLoading(true); // Start loading
     const token = localStorage.getItem('token');
     if (!token) {
-      router.push('/login');
+      redirect('/login');
+      setIsTokenLoading(false);
       return;
     }
 
@@ -43,20 +49,23 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
       const decoded = JSON.parse(atob(token.split('.')[1]));
       if (decoded && decoded.email) {
         setUserEmail(decoded.email);
-        setRole(decoded.role)
+        setRole(decoded.role);
       } else {
         throw new Error('Invalid token');
       }
     } catch (error) {
       console.error('Token decode error:', error);
       localStorage.removeItem('token');
-      router.push('/login');
+      redirect('/login');
+    } finally {
+      setIsTokenLoading(false); // End loading
     }
   }, [router, pathname, isPublicRoute]);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
     setUserEmail(null);
+    setRole(null);
     router.push('/login');
   };
 
@@ -64,23 +73,19 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
     setIsSidebarOpen(!isSidebarOpen);
   };
 
-
-
   const toggleMessages = () => {
     setIsMessagesOpen(!isMessagesOpen);
   };
 
   const handleClearMessages = async () => {
     try {
-      // Get userId from token
       const token = localStorage.getItem('token');
       let userId: string | null = null;
       if (token) {
         const decoded = JSON.parse(atob(token.split('.')[1]));
-        userId = decoded.email  || null; // Adjust based on your token structure
+        userId = decoded.email || null;
       }
 
-      // Call API to clear notifications
       const response = await fetch('/api/notifications/clear', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -88,7 +93,7 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
       });
 
       if (response.ok) {
-        dispatch(clearSSEMessages()); // Clear Redux store
+        dispatch(clearSSEMessages());
         setIsMessagesOpen(!isMessagesOpen);
       } else {
         console.error('Failed to clear messages:', await response.json());
@@ -117,6 +122,7 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
     hidden: { opacity: 0, y: -10 },
     visible: { opacity: 1, y: 0, transition: { duration: 0.2 } },
   };
+
   const navItems = [
     { href: '/', label: 'Tasks', icon: <FaTasks className="w-5 h-5" /> },
     { href: '/profile', label: 'Profile', icon: <FaUser className="w-5 h-5" /> },
@@ -125,10 +131,79 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
       : []),
   ];
 
+  // Skeleton Loader Component
+  const SkeletonLoader = () => (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="min-h-screen animate-pulse"
+    >
+      {/* Header Skeleton */}
+      <div className="bg-gray-300 fixed top-0 left-0 right-0 h-16 z-50">
+        <div className="container mx-auto max-w-7xl px-6 py-4 flex justify-between items-center">
+          <div className="flex items-center space-x-6">
+            <div className="h-8 w-8 bg-gray-400 rounded-lg"></div>
+            <div className="h-6 w-32 bg-gray-400 rounded"></div>
+          </div>
+          <div className="flex items-center space-x-6">
+            <div className="h-6 w-6 bg-gray-400 rounded-full"></div>
+            <div className="h-6 w-24 bg-gray-400 rounded-full hidden sm:block"></div>
+            <div className="h-10 w-28 bg-gray-400 rounded-lg"></div>
+          </div>
+        </div>
+      </div>
+
+      {/* Sidebar Skeleton */}
+      <div className="fixed md:static inset-y-0 left-0 z-40 w-64 bg-gray-200 mt-16 md:mt-0">
+        <div className="p-6 border-b border-gray-300">
+          <div className="h-6 w-20 bg-gray-400 rounded"></div>
+        </div>
+        <div className="p-4 space-y-4">
+          {[...Array(3)].map((_, index) => (
+            <div key={index} className="flex items-center space-x-3">
+              <div className="h-5 w-5 bg-gray-400 rounded"></div>
+              <div className="h-5 w-24 bg-gray-400 rounded"></div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Main Content Skeleton */}
+      <div className="flex flex-1 mt-16 md:pl-64 p-6">
+        <div className="flex-1 space-y-6">
+          <div className="h-8 w-48 bg-gray-400 rounded"></div>
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {[...Array(3)].map((_, index) => (
+              <div key={index} className="bg-gray-200 p-6 rounded-lg">
+                <div className="h-6 w-3/4 bg-gray-400 rounded mb-2"></div>
+                <div className="h-4 w-full bg-gray-400 rounded mb-4"></div>
+                <div className="flex space-x-3">
+                  <div className="h-10 w-20 bg-gray-400 rounded"></div>
+                  <div className="h-10 w-20 bg-gray-400 rounded"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Footer Skeleton */}
+      <div className="bg-gray-300 py-6">
+        <div className="container mx-auto max-w-7xl px-6 text-center">
+          <div className="h-4 w-48 bg-gray-400 rounded mx-auto"></div>
+          <div className="h-4 w-64 bg-gray-400 rounded mx-auto mt-2"></div>
+        </div>
+      </div>
+    </motion.div>
+  );
+
   return (
     <>
       {isPublicRoute ? (
         <main className="flex-1">{children}</main>
+      ) : isTokenLoading ? (
+        <SkeletonLoader />
       ) : (
         <>
           {/* Header */}
@@ -156,8 +231,7 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
                 </button>
                 <h1 className="text-2xl font-bold tracking-tight">Task Manager</h1>
               </div>
-              <div className="flex items-center space-x-6">              
-                {/* Messages Button */}
+              <div className="flex items-center space-x-6">
                 <div className="relative">
                   <button
                     onClick={toggleMessages}
@@ -227,9 +301,7 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
             </div>
           </motion.header>
           <NotificationListener />
-          {/* Main Layout */}
           <div className="flex flex-1 mt-20 md:mt-16">
-            {/* Sidebar */}
             <AnimatePresence>
               <motion.aside
                 initial="closed"
@@ -256,7 +328,7 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
                   </button>
                 </div>
                 <nav className="flex-1 p-4 space-y-2">
-                {navItems.map((item, index) => (
+                  {navItems.map((item, index) => (
                     <motion.div
                       key={item.href}
                       custom={index}
@@ -281,8 +353,6 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
                 </nav>
               </motion.aside>
             </AnimatePresence>
-
-            {/* Mobile Sidebar Backdrop */}
             {isSidebarOpen && (
               <motion.div
                 initial={{ opacity: 0 }}
@@ -292,12 +362,8 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
                 onClick={toggleSidebar}
               />
             )}
-
-            {/* Main Content */}
             <main className="flex-1 p-6 md:pl-8">{children}</main>
           </div>
-
-          {/* Footer */}
           <motion.footer
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

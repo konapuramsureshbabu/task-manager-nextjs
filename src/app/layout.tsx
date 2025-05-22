@@ -1,7 +1,7 @@
 // src/app/layout.tsx
 import type { Metadata } from 'next';
 import './globals.css';
-import { ClientLayout } from './ClientLayout';
+import { ClientLayout } from './layout/ClientLayout';
 import { Providers } from './redux/providers';
 
 
@@ -19,7 +19,7 @@ export default function RootLayout({
     <html lang="en">
       <body className="min-h-screen flex flex-col bg-gray-100">
       <Providers>
-          <ClientLayout>{children}</ClientLayout>
+      <ClientLayout>{children}</ClientLayout>
         </Providers>
       </body>
     </html>
