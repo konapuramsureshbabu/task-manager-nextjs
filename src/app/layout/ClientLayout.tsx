@@ -1,13 +1,20 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { redirect, usePathname, useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { motion, AnimatePresence } from 'framer-motion';
-import { FaTasks, FaUser, FaSignOutAlt, FaBell, FaEnvelope } from 'react-icons/fa';
-import { useAppDispatch, useAppSelector } from '../redux/redux-hooks';
-import NotificationListener from '../components/NotificationListener';
-import { clearSSEMessages } from '../redux/slices/sseMessagesSlice';
+import { useState, useEffect } from "react";
+import { redirect, usePathname, useRouter } from "next/navigation";
+import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  FaTasks,
+  FaUser,
+  FaSignOutAlt,
+  FaBell,
+  FaEnvelope,
+} from "react-icons/fa";
+import { useAppDispatch, useAppSelector } from "../redux/redux-hooks";
+import NotificationListener from "../components/NotificationListener";
+import { clearSSEMessages } from "../redux/slices/sseMessagesSlice";
+import Swal from "sweetalert2";
 
 export function ClientLayout({ children }: { children: React.ReactNode }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
@@ -26,7 +33,7 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
   }, [sseMessages]);
 
   // Define public routes that don't need header/sidebar/footer
-  const publicRoutes = ['/login', '/register'];
+  const publicRoutes = ["/login", "/register"];
   const isPublicRoute = publicRoutes.includes(pathname);
 
   useEffect(() => {
@@ -37,36 +44,36 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
 
     // Check for token
     setIsTokenLoading(true); // Start loading
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem("token");
     if (!token) {
-      redirect('/login');
+      redirect("/login");
       setIsTokenLoading(false);
       return;
     }
 
     // Decode token to get user email and id
     try {
-      const decoded = JSON.parse(atob(token.split('.')[1]));
+      const decoded = JSON.parse(atob(token.split(".")[1]));
       if (decoded && decoded.email) {
         setUserEmail(decoded.email);
         setRole(decoded.role);
       } else {
-        throw new Error('Invalid token');
+        throw new Error("Invalid token");
       }
     } catch (error) {
-      console.error('Token decode error:', error);
-      localStorage.removeItem('token');
-      redirect('/login');
+      console.error("Token decode error:", error);
+      localStorage.removeItem("token");
+      redirect("/login");
     } finally {
       setIsTokenLoading(false); // End loading
     }
   }, [router, pathname, isPublicRoute]);
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
+    localStorage.removeItem("token");
     setUserEmail(null);
     setRole(null);
-    router.push('/login');
+    router.push("/login");
   };
 
   const toggleSidebar = () => {
@@ -79,34 +86,47 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
 
   const handleClearMessages = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
       let userId: string | null = null;
       if (token) {
-        const decoded = JSON.parse(atob(token.split('.')[1]));
+        const decoded = JSON.parse(atob(token.split(".")[1]));
         userId = decoded.email || null;
       }
 
-      const response = await fetch('/api/notifications/clear', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/notifications/clear", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId }),
       });
 
       if (response.ok) {
         dispatch(clearSSEMessages());
         setIsMessagesOpen(!isMessagesOpen);
+        await Swal.fire({
+          toast: true,
+          position: "top-end",
+          icon: "success",
+          text: "Cleared Messages!",
+          timer: 2000,
+          timerProgressBar: true,
+          showConfirmButton: false,
+          padding: "0.75rem",
+          width: "auto",
+          background: "#10b981",
+          color: "#ffffff",
+        });
       } else {
-        console.error('Failed to clear messages:', await response.json());
+        console.error("Failed to clear messages:", await response.json());
       }
     } catch (error) {
-      console.error('Error clearing messages:', error);
+      console.error("Error clearing messages:", error);
     }
   };
 
   // Animation variants for sidebar and nav items
   const sidebarVariants = {
-    open: { x: 0, transition: { duration: 0.3, ease: 'easeInOut' } },
-    closed: { x: '-100%', transition: { duration: 0.3, ease: 'easeInOut' } },
+    open: { x: 0, transition: { duration: 0.3, ease: "easeInOut" } },
+    closed: { x: "-100%", transition: { duration: 0.3, ease: "easeInOut" } },
   };
 
   const navItemVariants = {
@@ -124,10 +144,20 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
   };
 
   const navItems = [
-    { href: '/', label: 'Tasks', icon: <FaTasks className="w-5 h-5" /> },
-    { href: '/profile', label: 'Profile', icon: <FaUser className="w-5 h-5" /> },
-    ...(role === 'admin'
-      ? [{ href: '/notifications', label: 'Send Notification', icon: <FaBell className="w-5 h-5" /> }]
+    { href: "/", label: "Tasks", icon: <FaTasks className="w-5 h-5" /> },
+    {
+      href: "/profile",
+      label: "Profile",
+      icon: <FaUser className="w-5 h-5" />,
+    },
+    ...(role === "admin"
+      ? [
+          {
+            href: "/notifications",
+            label: "Send Notification",
+            icon: <FaBell className="w-5 h-5" />,
+          },
+        ]
       : []),
   ];
 
@@ -220,7 +250,12 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
                   onClick={toggleSidebar}
                   aria-label="Toggle sidebar"
                 >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -229,7 +264,9 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
                     />
                   </svg>
                 </button>
-                <h1 className="text-2xl font-bold tracking-tight">Task Manager</h1>
+                <h1 className="text-2xl font-bold tracking-tight">
+                  Task Manager
+                </h1>
               </div>
               <div className="flex items-center space-x-6">
                 <div className="relative">
@@ -254,17 +291,23 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
                         className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl z-50 border border-gray-200"
                       >
                         <div className="p-4 border-b border-gray-200 flex justify-between items-center">
-                          <h3 className="text-lg font-semibold text-gray-800">Messages</h3>
-                          <button
-                            onClick={handleClearMessages}
-                            className="text-sm text-blue-600 hover:underline"
-                          >
-                            Clear All
-                          </button>
+                          <h3 className="text-lg font-semibold text-gray-800">
+                            Messages
+                          </h3>
+                          {sseMessages.length > 0 && (
+                            <button
+                              onClick={handleClearMessages}
+                              className="text-sm text-blue-600 hover:underline"
+                            >
+                              Clear All
+                            </button>
+                          )}
                         </div>
                         <div className="max-h-96 overflow-y-auto">
                           {sseMessages.length === 0 ? (
-                            <p className="p-4 text-gray-500 text-center">No messages</p>
+                            <p className="p-4 text-gray-500 text-center">
+                              No messages
+                            </p>
                           ) : (
                             sseMessages.map((message) => (
                               <motion.div
@@ -274,8 +317,12 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
                                 animate="visible"
                                 className="p-4 border-b border-gray-100 hover:bg-gray-50"
                               >
-                                <p className="text-sm font-medium text-gray-800">{message.title}</p>
-                                <p className="text-sm text-gray-600">{message.body}</p>
+                                <p className="text-sm font-medium text-gray-800">
+                                  {message.title}
+                                </p>
+                                <p className="text-sm text-gray-600">
+                                  {message.body}
+                                </p>
                                 <p className="text-xs text-gray-400 mt-1">
                                   {message.timestamp}
                                 </p>
@@ -288,7 +335,7 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
                   </AnimatePresence>
                 </div>
                 <span className="text-sm font-medium hidden sm:block bg-blue-100 text-blue-800 px-3 py-1 rounded-full">
-                  {userEmail || 'Loading...'}
+                  {userEmail || "Loading..."}
                 </span>
                 <button
                   onClick={handleLogout}
@@ -317,7 +364,12 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
                     onClick={toggleSidebar}
                     aria-label="Close sidebar"
                   >
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg
+                      className="w-6 h-6"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -340,8 +392,8 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
                         href={item.href}
                         className={`flex items-center space-x-3 px-4 py-3 text-gray-700 rounded-lg transition-all duration-200 ${
                           pathname === item.href
-                            ? 'bg-emerald-100 text-emerald-600 font-semibold border-l-4 border-emerald-500'
-                            : 'hover:bg-emerald-50 hover:text-emerald-600'
+                            ? "bg-emerald-100 text-emerald-600 font-semibold border-l-4 border-emerald-500"
+                            : "hover:bg-emerald-50 hover:text-emerald-600"
                         }`}
                         onClick={() => setIsSidebarOpen(false)}
                       >
@@ -375,7 +427,7 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
                 © {new Date().getFullYear()} Task Manager. All rights reserved.
               </p>
               <p className="text-sm mt-2">
-                Contact:{' '}
+                Contact:{" "}
                 <a
                   href="mailto:support@taskmanager.com"
                   className="underline hover:text-emerald-300 transition-colors duration-200"
