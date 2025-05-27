@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { render, act } from '@testing-library/react';
 import { useAppDispatch } from '../redux/redux-hooks';
 import NotificationListener from '../components/NotificationListener';
