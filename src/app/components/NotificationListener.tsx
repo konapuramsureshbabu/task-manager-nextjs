@@ -58,7 +58,7 @@ export default function NotificationListener() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ userId }),
-      }).catch((error) => console.error('Error subscribing:', error));
+      })?.catch((error) => console?.error('Error subscribing:', error));
     }
 
 
